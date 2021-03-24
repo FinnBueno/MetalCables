@@ -2,23 +2,21 @@ package me.finnbon.metalcables;
 
 import com.projectkorra.projectkorra.Element;
 import com.projectkorra.projectkorra.ability.AddonAbility;
+import com.projectkorra.projectkorra.ability.CoreAbility;
 import com.projectkorra.projectkorra.ability.MetalAbility;
 import com.projectkorra.projectkorra.ability.MultiAbility;
 import com.projectkorra.projectkorra.ability.util.MultiAbilityManager;
 import com.projectkorra.projectkorra.configuration.ConfigManager;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.listener.MetalCablesListener;
-import me.finnbon.metalcables.subability.Grapple;
-import me.finnbon.metalcables.subability.MetalCablesSubAbility;
+import me.finnbon.metalcables.subability.*;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Finn Bon
@@ -35,29 +33,34 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	private static long COOLDOWN;
 	private static long MAX_USES;
 
+	private static final double DOUBLE_SPEED = 1.2;
+
 	static {
 		SUB_ABILITIES.addAll(Arrays.asList(
-			new Grapple.Right(),
+			new Grapple.Left(),
 			new Grapple.Both(),
-			new Grapple.Left()
-//			Clear.class,
-//			Grab.Left.class,
-//			Grab.Left.class,
-//			Slam.Left.class,
-//			Slam.Right.class,
-//			Exit.class
+			new Grapple.Right(),
+			new Grab.Left(),
+			new Grab.Right(),
+			new Slam.Left(),
+			new Slam.Right(),
+			new Clear.Activator(),
+			new Exit.Activator()
 		));
 
 		FileConfiguration c = ConfigManager.defaultConfig.get();
-		COOLDOWN = c.getLong("ExtraAbilities.Finn_Bueno_.MetalCables.Cooldown");
-		MAX_USES = c.getInt("ExtraAbilities.Finn_Bueno_.MetalCables.Uses");
+		COOLDOWN = c.getLong("ExtraAbilities.FinnBueno.MetalCables.Cooldown");
+		MAX_USES = c.getInt("ExtraAbilities.FinnBueno.MetalCables.Uses");
 	}
+
+	private boolean hadAllowFlight;
 
 	public MetalCablesAbility(Player player) {
 		super(player);
 		// open multi ability menu
 		MultiAbilityManager.bindMultiAbility(player, getName());
-		System.out.printf("Found %s abilities%n", String.valueOf(MultiAbilityManager.getMultiAbility(getName()).getAbilities().size()));
+		hadAllowFlight = player.getAllowFlight();
+		player.setAllowFlight(true);
 
 		playMetalbendingSound(player.getEyeLocation().subtract(0, 1, 0));
 		start();
@@ -70,6 +73,49 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 			return;
 		}
 		renderHips();
+		if (player.isSneaking() && player.getInventory().getHeldItemSlot() == 1) {
+			handlePullBothGrapple();
+			handlePullBothGrab();
+		}
+	}
+
+	private void handlePullBothGrab() {
+		CoreAbility.getAbilities(player, Grab.class).forEach(Grab::pullTarget);
+	}
+
+	private void handlePullBothGrapple() {
+		// find all active grapples
+		Collection<Grapple> grapples = CoreAbility.getAbilities(player, Grapple.class);
+		Location target = null;
+		if (grapples.size() == 0) { // if there aren't any grapples, don't pull
+			return;
+		} else if (grapples.size() == 1) { // if there's only one, check if it's struck terrain and then use it
+			Grapple grapple = grapples.iterator().next();
+			target = grapple.hasStruckTerrain() ? grapple.getCableHead() : null;
+		} else { // if there's 2, things get a bit trickier
+			// get both grapples through an iterator because Collection
+			Iterator<Grapple> it = grapples.iterator();
+			Grapple grapple1 = it.next();
+			Grapple grapple2 = it.next();
+			// check if they've struck terrain and if so get their cable head
+			Location loc1 = grapple1.hasStruckTerrain() ? grapple1.getCableHead() : null;
+			Location loc2 = grapple2.hasStruckTerrain() ? grapple2.getCableHead() : null;
+			if (loc1 == null || loc2 == null) { // if either (or both) of the grapples have not struck terrain
+				if (loc1 != null) { // if grapple1 is not null, use it
+					target = loc1;
+				} else if (loc2 != null) { // if grapple2 is not null, use it
+					target = loc2;
+				}
+			} else { // if both of them have struck terrain, find the middle and use that
+				Vector delta = loc2.toVector().subtract(loc1.toVector()).multiply(0.5);
+				loc1.add(delta);
+				target = loc1;
+			}
+		}
+		// if we found a target to pull towards, proceed to pull the player
+		if (target != null) {
+			MetalCablesUtil.pullEntity(player, target, DOUBLE_SPEED);
+		}
 	}
 
 	private void renderHips() {
@@ -109,6 +155,7 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	public void remove() {
 		super.remove();
 		bPlayer.addCooldown(this);
+		player.setAllowFlight(hadAllowFlight);
 		MultiAbilityManager.unbindMultiAbility(player);
 	}
 

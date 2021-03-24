@@ -3,6 +3,7 @@ package me.finnbon.metalcables.util;
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms.Arm;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -36,6 +37,16 @@ public class MetalCablesUtil {
 		double length = start.distance(end);
 		Vector direction = end.toVector().subtract(start.toVector());
 		renderLine(start, direction, length, step);
+	}
+
+	public static void pullEntity(Entity entity, Location target, double pullSpeed) {
+		Vector pull = target.toVector().subtract(entity.getLocation().toVector()).normalize().multiply(pullSpeed);
+		if (entity.getLocation().distance(target) <= .8) {
+			return;
+		} else if (entity.getLocation().distance(target) < 3) {
+			pull.normalize().multiply(0.2);
+		}
+		entity.setVelocity(pull);
 	}
 
 }
