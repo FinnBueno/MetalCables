@@ -2,6 +2,7 @@ package me.finnbon.metalcables.subability;
 
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
+import me.finnbon.metalcables.MetalCablesAbility;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -14,8 +15,8 @@ public class Grapple extends MetalCablesSubAbility {
 	public static class Left extends SubAbilityActivationHandler {
 
 		@Override
-		protected void onActivate(Player player) {
-			new Grapple(player, 0);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Grapple(player, 0, metalCablesAbility);
 		}
 		@Override
 		protected WaterArms.Arm[] getSidesToDisable() {
@@ -26,10 +27,10 @@ public class Grapple extends MetalCablesSubAbility {
 	public static class Both extends SubAbilityActivationHandler {
 
 		@Override
-		protected void onActivate(Player player) {
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			// grapple both just activates left and right at the same time
-			new Grapple(player, 0);
-			new Grapple(player, 2);
+			new Grapple(player, 0, metalCablesAbility);
+			new Grapple(player, 2, metalCablesAbility);
 		}
 		@Override
 		protected WaterArms.Arm[] getSidesToDisable() {
@@ -40,8 +41,8 @@ public class Grapple extends MetalCablesSubAbility {
 	public static class Right extends SubAbilityActivationHandler {
 
 		@Override
-		protected void onActivate(Player player) {
-			new Grapple(player, 2);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Grapple(player, 2, metalCablesAbility);
 		}
 		@Override
 		protected WaterArms.Arm[] getSidesToDisable() {
@@ -57,8 +58,8 @@ public class Grapple extends MetalCablesSubAbility {
 	@Attribute(Attribute.SPEED)
 	private double speed = 3;
 
-	public Grapple(Player player, int requiredSlot) {
-		super(player, requiredSlot);
+	public Grapple(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
+		super(player, requiredSlot, metalCablesAbility);
 		direction.multiply(speed);
 		start();
 	}

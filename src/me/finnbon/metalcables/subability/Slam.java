@@ -3,6 +3,7 @@ package me.finnbon.metalcables.subability;
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.util.DamageHandler;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
+import me.finnbon.metalcables.MetalCablesAbility;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -13,8 +14,8 @@ public class Slam extends Grab {
 
 	public static class Left extends SubAbilityActivationHandler {
 		@Override
-		protected void onActivate(Player player) {
-			new Slam(player, 5);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Slam(player, 5, metalCablesAbility);
 		}
 
 		@Override
@@ -24,8 +25,8 @@ public class Slam extends Grab {
 	}
 	public static class Right extends SubAbilityActivationHandler {
 		@Override
-		protected void onActivate(Player player) {
-			new Slam(player, 6);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Slam(player, 6, metalCablesAbility);
 		}
 
 		@Override
@@ -41,8 +42,8 @@ public class Slam extends Grab {
 	@Attribute(Attribute.DAMAGE)
 	private double damage = 2;
 
-	public Slam(Player player, int requiredSlot) {
-		super(player, requiredSlot);
+	public Slam(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
+		super(player, requiredSlot, metalCablesAbility);
 		direction.normalize().multiply(speed);
 	}
 

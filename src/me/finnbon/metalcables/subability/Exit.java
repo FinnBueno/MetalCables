@@ -12,13 +12,13 @@ public class Exit extends MetalCablesSubAbility {
 
 	public static class Activator extends SubAbilityActivationHandler {
 		@Override
-		protected void onActivate(Player player) {
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			CoreAbility.getAbility(player, MetalCablesAbility.class).remove();
 		}
 	}
 
-	public Exit(Player player, int requiredSlot) {
-		super(player, requiredSlot);
+	public Exit(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
+		super(player, requiredSlot, metalCablesAbility);
 	}
 
 	@Override

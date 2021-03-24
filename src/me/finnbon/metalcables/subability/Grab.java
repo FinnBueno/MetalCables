@@ -3,6 +3,7 @@ package me.finnbon.metalcables.subability;
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
+import me.finnbon.metalcables.MetalCablesAbility;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -16,8 +17,8 @@ public class Grab extends MetalCablesSubAbility {
 
 	public static class Left extends SubAbilityActivationHandler {
 		@Override
-		protected void onActivate(Player player) {
-			new Grab(player, 3);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Grab(player, 3, metalCablesAbility);
 		}
 
 		@Override
@@ -27,8 +28,8 @@ public class Grab extends MetalCablesSubAbility {
 	}
 	public static class Right extends SubAbilityActivationHandler {
 		@Override
-		protected void onActivate(Player player) {
-			new Grab(player, 4);
+		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
+			new Grab(player, 4, metalCablesAbility);
 		}
 
 		@Override
@@ -46,8 +47,8 @@ public class Grab extends MetalCablesSubAbility {
 
 	protected Entity target;
 
-	public Grab(Player player, int requiredSlot) {
-		super(player, requiredSlot);
+	public Grab(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
+		super(player, requiredSlot, metalCablesAbility);
 		direction.multiply(speed);
 		start();
 	}
@@ -112,7 +113,7 @@ public class Grab extends MetalCablesSubAbility {
 
 	@Override
 	public int getPointsSpentPerUse() {
-		return 0;
+		return 1;
 	}
 
 	@Override

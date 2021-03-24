@@ -11,12 +11,19 @@ import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.listener.MetalCablesListener;
 import me.finnbon.metalcables.subability.*;
 import me.finnbon.metalcables.util.MetalCablesUtil;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+
+import static me.finnbon.metalcables.subability.MetalCablesSubAbility.SUB_ABILITY_CLASSES;
 
 /**
  * @author Finn Bon
@@ -31,7 +38,7 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	public static final List<MetalCablesSubAbility.SubAbilityActivationHandler> SUB_ABILITIES = new ArrayList<>();
 
 	private static long COOLDOWN;
-	private static long MAX_USES;
+	private static int MAX_USES = 100;
 
 	private static final double DOUBLE_SPEED = 1.2;
 
@@ -49,11 +56,14 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 		));
 
 		FileConfiguration c = ConfigManager.defaultConfig.get();
-		COOLDOWN = c.getLong("ExtraAbilities.FinnBueno.MetalCables.Cooldown");
-		MAX_USES = c.getInt("ExtraAbilities.FinnBueno.MetalCables.Uses");
+		COOLDOWN = c.getLong("ExtraAbilities.FinnBueno.MetalCables.Cooldown", 5000);
+		MAX_USES = c.getInt("ExtraAbilities.FinnBueno.MetalCables.Uses", 100);
 	}
 
+	private final BossBar usesLeftRenderer;
+
 	private boolean hadAllowFlight;
+	private int uses;
 
 	public MetalCablesAbility(Player player) {
 		super(player);
@@ -61,7 +71,13 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 		MultiAbilityManager.bindMultiAbility(player, getName());
 		hadAllowFlight = player.getAllowFlight();
 		player.setAllowFlight(true);
-
+		uses = MAX_USES;
+		usesLeftRenderer = Bukkit.createBossBar(
+			ChatColor.translateAlternateColorCodes('&',
+				"&8MetalCables > &2" + this.uses + "/" + MAX_USES),
+			BarColor.GREEN, BarStyle.SOLID);
+		usesLeftRenderer.addPlayer(player);
+		usesLeftRenderer.setProgress(1);
 		playMetalbendingSound(player.getEyeLocation().subtract(0, 1, 0));
 		start();
 	}
@@ -147,16 +163,33 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 		if (slot >= SUB_ABILITIES.size()) {
 			return;
 		}
+		if (uses <= 0) {
+			remove();
+			return;
+		}
 		MetalCablesSubAbility.SubAbilityActivationHandler subAbilityActivationHandler = SUB_ABILITIES.get(slot);
-		subAbilityActivationHandler.activate(player);
+		subAbilityActivationHandler.activate(player, this);
+	}
+
+	public void decreaseUses(int pointsSpentPerUse) {
+		uses-= pointsSpentPerUse;
+		usesLeftRenderer.setProgress(Math.max(0, uses / ((double) MAX_USES)));
+		usesLeftRenderer.setTitle(
+			ChatColor.translateAlternateColorCodes('&',
+				"&8MetalCables > &2" + this.uses + "/" + MAX_USES)
+		);
 	}
 
 	@Override
 	public void remove() {
 		super.remove();
+		usesLeftRenderer.removeAll();
 		bPlayer.addCooldown(this);
 		player.setAllowFlight(hadAllowFlight);
 		MultiAbilityManager.unbindMultiAbility(player);
+		for (Class<? extends MetalCablesSubAbility> subAbilityClass : SUB_ABILITY_CLASSES) {
+			CoreAbility.getAbilities(player, subAbilityClass).forEach(MetalCablesSubAbility::remove);
+		}
 	}
 
 	@Override

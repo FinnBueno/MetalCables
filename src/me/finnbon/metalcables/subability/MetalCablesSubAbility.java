@@ -1,10 +1,10 @@
 package me.finnbon.metalcables.subability;
 
-import com.projectkorra.projectkorra.BendingPlayer;
 import com.projectkorra.projectkorra.ability.AddonAbility;
 import com.projectkorra.projectkorra.ability.CoreAbility;
 import com.projectkorra.projectkorra.ability.MetalAbility;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
+import me.finnbon.metalcables.MetalCablesAbility;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -19,19 +19,19 @@ import static me.finnbon.metalcables.MetalCablesAbility.*;
  */
 public abstract class MetalCablesSubAbility extends MetalAbility implements AddonAbility {
 
-	protected static final List<Class<? extends MetalCablesSubAbility>> SUB_ABILITY_CLASSES = Arrays.asList(
+	public static final List<Class<? extends MetalCablesSubAbility>> SUB_ABILITY_CLASSES = Arrays.asList(
 		Grapple.class,
 		Grab.class,
 		Slam.class
 	);
 
 	public abstract static class SubAbilityActivationHandler {
-		public void activate(Player player) {
+		public void activate(Player player, MetalCablesAbility metalCablesAbility) {
 			WaterArms.Arm[] sidesToDisable = getSidesToDisable();
 			disableAbilitiesOnSides(Arrays.asList(sidesToDisable), player);
-			onActivate(player);
+			onActivate(player, metalCablesAbility);
 		}
-		protected abstract void onActivate(Player player);
+		protected abstract void onActivate(Player player, MetalCablesAbility metalCablesAbility);
 		protected WaterArms.Arm[] getSidesToDisable() {
 			return new WaterArms.Arm[0];
 		}
@@ -60,8 +60,9 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 	protected double distanceTravelled;
 	protected boolean isStuck;
 
-	public MetalCablesSubAbility(Player player, int requiredSlot) {
+	public MetalCablesSubAbility(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
 		super(player);
+		metalCablesAbility.decreaseUses(getPointsSpentPerUse());
 		this.requiredSlot = requiredSlot;
 		side = slotToSide(requiredSlot);
 		cableHead = player.getEyeLocation();
