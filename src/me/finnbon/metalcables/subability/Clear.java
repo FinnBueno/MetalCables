@@ -19,6 +19,10 @@ public class Clear extends MetalCablesSubAbility {
 				}
 			}
 		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return null;
+		}
 	}
 
 	public Clear(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {

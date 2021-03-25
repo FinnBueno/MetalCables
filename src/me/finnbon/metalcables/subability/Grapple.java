@@ -3,6 +3,7 @@ package me.finnbon.metalcables.subability;
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.MetalCablesAbility;
+import me.finnbon.metalcables.util.ConfigValue;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -13,19 +14,20 @@ import org.bukkit.util.Vector;
 public class Grapple extends MetalCablesSubAbility {
 
 	public static class Left extends SubAbilityActivationHandler {
-
 		@Override
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Grapple(player, 0, metalCablesAbility);
 		}
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.LEFT };
 		}
-
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Grapple.class;
+		}
 	}
 	public static class Both extends SubAbilityActivationHandler {
-
 		@Override
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			// grapple both just activates left and right at the same time
@@ -33,34 +35,43 @@ public class Grapple extends MetalCablesSubAbility {
 			new Grapple(player, 2, metalCablesAbility);
 		}
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.RIGHT, WaterArms.Arm.LEFT };
 		}
-
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Grapple.class;
+		}
 	}
 	public static class Right extends SubAbilityActivationHandler {
-
 		@Override
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Grapple(player, 2, metalCablesAbility);
 		}
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.RIGHT };
 		}
-
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Grapple.class;
+		}
 	}
 
-	@Attribute("pullSpeed")
-	private double pullSpeed = 1.2;
+	@ConfigValue("PullSpeed")
+	private static double PULL_SPEED = 1.2;
+	@ConfigValue("Range")
 	@Attribute(Attribute.RANGE)
-	private double maxDistance = 100;
+	private static double RANGE = 100;
+	@ConfigValue("Speed")
 	@Attribute(Attribute.SPEED)
-	private double speed = 3;
+	private static double SPEED = 3;
+	@ConfigValue("Cooldown")
+	private static long COOLDOWN = 0;
 
 	public Grapple(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
 		super(player, requiredSlot, metalCablesAbility);
-		direction.multiply(speed);
+		direction.multiply(SPEED);
 		start();
 	}
 
@@ -69,7 +80,7 @@ public class Grapple extends MetalCablesSubAbility {
 		super.progress();
 		player.setFallDistance(0);
 		if (player.isSneaking() && hasRequiredSlot() && hasStruckTerrain()) {
-			MetalCablesUtil.pullEntity(player, cableHead, pullSpeed);
+			MetalCablesUtil.pullEntity(player, cableHead, PULL_SPEED);
 		}
 	}
 
@@ -81,12 +92,12 @@ public class Grapple extends MetalCablesSubAbility {
 
 	@Override
 	public double getSpeed() {
-		return speed;
+		return SPEED;
 	}
 
 	@Override
 	public double getMaxDistance() {
-		return maxDistance;
+		return RANGE;
 	}
 
 	@Override
@@ -122,6 +133,6 @@ public class Grapple extends MetalCablesSubAbility {
 
 	@Override
 	public long getCooldown() {
-		return 0;
+		return COOLDOWN;
 	}
 }

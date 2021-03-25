@@ -1,5 +1,7 @@
 package me.finnbon.metalcables.subability;
 
+import com.projectkorra.projectkorra.BendingPlayer;
+import com.projectkorra.projectkorra.ProjectKorra;
 import com.projectkorra.projectkorra.ability.AddonAbility;
 import com.projectkorra.projectkorra.ability.CoreAbility;
 import com.projectkorra.projectkorra.ability.MetalAbility;
@@ -8,6 +10,8 @@ import me.finnbon.metalcables.MetalCablesAbility;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -27,12 +31,12 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 
 	public abstract static class SubAbilityActivationHandler {
 		public void activate(Player player, MetalCablesAbility metalCablesAbility) {
-			WaterArms.Arm[] sidesToDisable = getSidesToDisable();
+			WaterArms.Arm[] sidesToDisable = getSides();
 			disableAbilitiesOnSides(Arrays.asList(sidesToDisable), player);
 			onActivate(player, metalCablesAbility);
 		}
 		protected abstract void onActivate(Player player, MetalCablesAbility metalCablesAbility);
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[0];
 		}
 
@@ -51,6 +55,8 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 				}
 			}
 		}
+
+		public abstract Class<? extends MetalCablesSubAbility> getAbilityClass();
 	}
 
 	private final int requiredSlot;
@@ -72,6 +78,10 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 
 	@Override
 	public void progress() {
+		if (player.getLocation().getWorld() != cableHead.getWorld()) {
+			remove();
+			return;
+		}
 		if (!hasStruckTerrain()) {
 			// travel
 			cableHead.add(direction);
@@ -133,8 +143,14 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 	}
 
 	@Override
+	public void remove() {
+		super.remove();
+		BendingPlayer.getBendingPlayer(player).addCooldown("MetalCables-" + getSubName() + "-" + getSide().name(), getCooldown());
+	}
+
+	@Override
 	public String getName() {
-		return "MetalCables [" + getSubName() + "]";
+		return "MetalCables." + getSubName();
 	}
 
 	public final boolean hasRequiredSlot() {
@@ -162,7 +178,15 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 	}
 
 	@Override
-	public void load() {}
+	public void load() {
+		ProjectKorra
+			.plugin
+			.getServer()
+			.getPluginManager()
+			.addPermission(
+				new Permission("bending.ability." + getName(), PermissionDefault.OP)
+			);
+	}
 
 	@Override
 	public void stop() {}

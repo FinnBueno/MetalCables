@@ -4,6 +4,7 @@ import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.MetalCablesAbility;
+import me.finnbon.metalcables.util.ConfigValue;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -20,10 +21,13 @@ public class Grab extends MetalCablesSubAbility {
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Grab(player, 3, metalCablesAbility);
 		}
-
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.LEFT };
+		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Grab.class;
 		}
 	}
 	public static class Right extends SubAbilityActivationHandler {
@@ -31,19 +35,28 @@ public class Grab extends MetalCablesSubAbility {
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Grab(player, 4, metalCablesAbility);
 		}
-
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.RIGHT };
+		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Grab.class;
 		}
 	}
 
-	@Attribute("pullSpeed")
-	private double pullSpeed = 1.2;
+	@ConfigValue("PullSpeed")
+	private static double PULL_SPEED = 1.2;
+	@ConfigValue("Range")
 	@Attribute(Attribute.RANGE)
-	private double maxDistance = 100;
+	private static double RANGE = 100;
+	@ConfigValue("Speed")
 	@Attribute(Attribute.SPEED)
-	private double speed = 3;
+	private static double speed = 3;
+	@ConfigValue("Cooldown")
+	private static long COOLDOWN = 2000;
+	@ConfigValue("Duration")
+	private static long DURATION = 3000;
 
 	protected Entity target;
 
@@ -56,6 +69,10 @@ public class Grab extends MetalCablesSubAbility {
 	@Override
 	public void progress() {
 		super.progress();
+		if (System.currentTimeMillis() - getStartTime() > DURATION) {
+			remove();
+			return;
+		}
 		if (target != null) {
 			target.setFallDistance(0);
 			cableHead = target.getLocation().add(0, 0.5, 0);
@@ -82,7 +99,7 @@ public class Grab extends MetalCablesSubAbility {
  	}
 
 	public void pullTarget() {
-		MetalCablesUtil.pullEntity(target, player.getLocation().add(0, 1, 0), pullSpeed);
+		MetalCablesUtil.pullEntity(target, player.getLocation().add(0, 1, 0), PULL_SPEED);
 	}
 
 	@Override
@@ -97,7 +114,7 @@ public class Grab extends MetalCablesSubAbility {
 
 	@Override
 	public double getMaxDistance() {
-		return maxDistance;
+		return RANGE;
 	}
 
 	@Override
@@ -133,6 +150,6 @@ public class Grab extends MetalCablesSubAbility {
 
 	@Override
 	public long getCooldown() {
-		return 0;
+		return COOLDOWN;
 	}
 }

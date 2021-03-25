@@ -4,6 +4,7 @@ import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.util.DamageHandler;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.MetalCablesAbility;
+import me.finnbon.metalcables.util.ConfigValue;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -17,10 +18,13 @@ public class Slam extends Grab {
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Slam(player, 5, metalCablesAbility);
 		}
-
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.LEFT };
+		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Slam.class;
 		}
 	}
 	public static class Right extends SubAbilityActivationHandler {
@@ -28,23 +32,31 @@ public class Slam extends Grab {
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			new Slam(player, 6, metalCablesAbility);
 		}
-
 		@Override
-		protected WaterArms.Arm[] getSidesToDisable() {
+		public WaterArms.Arm[] getSides() {
 			return new WaterArms.Arm[] { WaterArms.Arm.RIGHT };
+		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return Slam.class;
 		}
 	}
 
+	@ConfigValue("Range")
 	@Attribute(Attribute.RANGE)
-	private double maxDistance = 100;
+	private static double RANGE = 100;
+	@ConfigValue("Speed")
 	@Attribute(Attribute.SPEED)
-	private double speed = 3;
+	private static double SPEED = 3;
+	@ConfigValue("Damage")
 	@Attribute(Attribute.DAMAGE)
-	private double damage = 2;
+	private static double DAMAGE = 2;
+	@ConfigValue("Cooldown")
+	private static long COOLDOWN = 1000;
 
 	public Slam(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
 		super(player, requiredSlot, metalCablesAbility);
-		direction.normalize().multiply(speed);
+		direction.normalize().multiply(SPEED);
 	}
 
 	@Override
@@ -52,7 +64,7 @@ public class Slam extends Grab {
 		super.progress();
 		if (target != null) {
 			if (target instanceof LivingEntity) {
-				DamageHandler.damageEntity(target, damage, this);
+				DamageHandler.damageEntity(target, DAMAGE, this);
 			}
 			remove();
 		}
@@ -71,16 +83,21 @@ public class Slam extends Grab {
 
 	@Override
 	public double getMaxDistance() {
-		return maxDistance;
+		return RANGE;
 	}
 
 	@Override
 	public double getSpeed() {
-		return speed;
+		return SPEED;
 	}
 
 	@Override
 	public String getSubName() {
 		return "Slam";
+	}
+
+	@Override
+	public long getCooldown() {
+		return COOLDOWN;
 	}
 }

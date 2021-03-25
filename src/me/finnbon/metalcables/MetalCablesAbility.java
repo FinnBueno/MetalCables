@@ -1,6 +1,7 @@
 package me.finnbon.metalcables;
 
 import com.projectkorra.projectkorra.Element;
+import com.projectkorra.projectkorra.ProjectKorra;
 import com.projectkorra.projectkorra.ability.AddonAbility;
 import com.projectkorra.projectkorra.ability.CoreAbility;
 import com.projectkorra.projectkorra.ability.MetalAbility;
@@ -10,17 +11,22 @@ import com.projectkorra.projectkorra.configuration.ConfigManager;
 import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import me.finnbon.metalcables.listener.MetalCablesListener;
 import me.finnbon.metalcables.subability.*;
+import me.finnbon.metalcables.util.ConfigValue;
 import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.util.Vector;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static me.finnbon.metalcables.subability.MetalCablesSubAbility.SUB_ABILITY_CLASSES;
@@ -37,8 +43,12 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 
 	public static final List<MetalCablesSubAbility.SubAbilityActivationHandler> SUB_ABILITIES = new ArrayList<>();
 
-	private static long COOLDOWN;
+	@ConfigValue("Cooldown")
+	private static long COOLDOWN = 10000;
+	@ConfigValue("Uses")
 	private static int MAX_USES = 100;
+	@ConfigValue("GenericAbilityCooldown")
+	public static long GLOBAL_SUB_ABILITY_COOLDOWN = 750L;
 
 	private static final double DOUBLE_SPEED = 1.2;
 
@@ -54,10 +64,6 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 			new Clear.Activator(),
 			new Exit.Activator()
 		));
-
-		FileConfiguration c = ConfigManager.defaultConfig.get();
-		COOLDOWN = c.getLong("ExtraAbilities.FinnBueno.MetalCables.Cooldown", 5000);
-		MAX_USES = c.getInt("ExtraAbilities.FinnBueno.MetalCables.Uses", 100);
 	}
 
 	private final BossBar usesLeftRenderer;
@@ -168,7 +174,29 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 			return;
 		}
 		MetalCablesSubAbility.SubAbilityActivationHandler subAbilityActivationHandler = SUB_ABILITIES.get(slot);
-		subAbilityActivationHandler.activate(player, this);
+		for (WaterArms.Arm side : subAbilityActivationHandler.getSides()) {
+			if (
+				bPlayer.isOnCooldown("MetalCables-" + side.name()) ||
+				bPlayer.isOnCooldown("MetalCables-" + subAbilityActivationHandler.getAbilityClass().getSimpleName() + "-" + side.name())
+			) {
+				return;
+			}
+		}
+		// if the activator has an ability class associated with it, check whether or not the player can bend it
+		// (exit and clear don't have an ability class associated with their activator, and thus return null)
+		if (
+			subAbilityActivationHandler.getAbilityClass() == null ||
+			bPlayer.canBendIgnoreBinds(
+				CoreAbility.getAbility(
+					subAbilityActivationHandler.getAbilityClass()
+				)
+			)
+		) {
+			subAbilityActivationHandler.activate(player, this);
+			for (WaterArms.Arm side : subAbilityActivationHandler.getSides()) {
+				bPlayer.addCooldown("MetalCables-" + side.name(), GLOBAL_SUB_ABILITY_COOLDOWN);
+			}
+		}
 	}
 
 	public void decreaseUses(int pointsSpentPerUse) {
@@ -204,7 +232,7 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 
 	@Override
 	public long getCooldown() {
-		return 0;
+		return COOLDOWN;
 	}
 
 	@Override
@@ -220,6 +248,58 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	@Override
 	public void load() {
 		new MetalCablesListener(this);
+		ProjectKorra
+			.plugin
+			.getServer()
+			.getPluginManager()
+			.addPermission(
+				new Permission("bending.ability." + getName(), PermissionDefault.OP)
+			);
+		handleConfig();
+	}
+
+	private void handleConfig() {
+		FileConfiguration config = ConfigManager.getConfig();
+		Class<?>[] classesWithConfigValues = new Class<?>[] {
+			MetalCablesAbility.class,
+			Grapple.class,
+			Grab.class,
+			Slam.class,
+			MetalCablesListener.class
+		};
+		for (Class<?> classWithConfigValues : classesWithConfigValues) {
+			Arrays
+				.stream(classWithConfigValues.getDeclaredFields())
+				.filter(field -> Modifier.isStatic(field.getModifiers()))
+				.forEach(field -> {
+					ConfigValue configValue = field.getAnnotation(ConfigValue.class);
+					if (configValue == null) return;
+					String configPath = getConfigPath(configValue.value(), getClass());
+					try {
+						config.addDefault(
+							configPath,
+							field.get(null)
+						);
+						Object valueFromConfig = config.get(configPath);
+						if (valueFromConfig != null) {
+							field.set(null, valueFromConfig);
+						}
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+						System.err.println("Could not set default value for " + configPath);
+					}
+				});
+		}
+		ConfigManager.defaultConfig.save();
+	}
+
+	public String getConfigPath(String name, Class<?> clazz) {
+		StringBuilder builder = new StringBuilder("ExtraAbilities.FinnBueno.");
+		if (clazz.getSuperclass() == MetalCablesSubAbility.class) {
+			builder.append(clazz.getSimpleName()).append(".");
+		}
+		builder.append(name);
+		return builder.toString();
 	}
 
 	@Override

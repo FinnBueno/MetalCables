@@ -15,6 +15,10 @@ public class Exit extends MetalCablesSubAbility {
 		protected void onActivate(Player player, MetalCablesAbility metalCablesAbility) {
 			CoreAbility.getAbility(player, MetalCablesAbility.class).remove();
 		}
+		@Override
+		public Class<? extends MetalCablesSubAbility> getAbilityClass() {
+			return null;
+		}
 	}
 
 	public Exit(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
