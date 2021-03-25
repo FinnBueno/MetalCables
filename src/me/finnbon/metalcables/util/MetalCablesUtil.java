@@ -14,8 +14,7 @@ import static me.finnbon.metalcables.MetalCablesAbility.METAL_COLOR;
  */
 public class MetalCablesUtil {
 
-	public static Location getHand(Player player, Arm side)
-	{
+	public static Location getHand(Player player, Arm side) {
 		switch (side) {
 			case RIGHT:
 				return GeneralMethods.getRightSide(player.getEyeLocation(), 0.4D).subtract(0.0D, 0.6D, 0.0D);
@@ -37,6 +36,19 @@ public class MetalCablesUtil {
 		double length = start.distance(end);
 		Vector direction = end.toVector().subtract(start.toVector());
 		renderLine(start, direction, length, step);
+	}
+
+	public static void pullPlayer(Player player, Location target, double pullSpeed) {
+		Vector pull = target.toVector().subtract(player.getLocation().toVector()).normalize().multiply(pullSpeed);
+		if (pull.angle(player.getLocation().getDirection()) < Math.toRadians(15)) {
+			pull = player.getLocation().getDirection().multiply(pullSpeed);
+		}
+		if (player.getLocation().distance(target) <= .8) {
+			return;
+		} else if (player.getLocation().distance(target) < 3) {
+			pull.normalize().multiply(0.2);
+		}
+		player.setVelocity(pull);
 	}
 
 	public static void pullEntity(Entity entity, Location target, double pullSpeed) {

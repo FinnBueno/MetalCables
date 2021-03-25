@@ -74,9 +74,9 @@ public class Grab extends MetalCablesSubAbility {
 			return;
 		}
 		if (target != null) {
-			target.setFallDistance(0);
 			cableHead = target.getLocation().add(0, 0.5, 0);
 			if (player.isSneaking() && getSide() == slotToSide(player.getInventory().getHeldItemSlot())) {
+				target.setFallDistance(0);
 				pullTarget();
 			}
 		} else {

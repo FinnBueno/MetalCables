@@ -36,7 +36,7 @@ public class MetalCablesListener implements Listener {
 	@ConfigValue("SourceRequired")
 	public static boolean SOURCE_REQUIRED = true;
 	@ConfigValue("ValidSourceItems")
-	public static String[] VALID_SOURCE_ITEMS = new String[] {
+	public static List<String> VALID_SOURCE_ITEMS = Arrays.asList(
 		Material.GOLD_ORE.name(), Material.IRON_ORE.name(), Material.GOLD_BLOCK.name(),
 		Material.IRON_BLOCK.name(), Material.IRON_DOOR.name(), Material.IRON_BARS.name(),
 		Material.LIGHT_WEIGHTED_PRESSURE_PLATE.name(), Material.HEAVY_WEIGHTED_PRESSURE_PLATE.name(),
@@ -54,7 +54,7 @@ public class MetalCablesListener implements Listener {
 		Material.IRON_CHESTPLATE.name(), Material.GOLDEN_CHESTPLATE.name(),
 		Material.CHAINMAIL_CHESTPLATE.name(), Material.IRON_HELMET.name(), Material.GOLDEN_HELMET.name(),
 		Material.CHAINMAIL_HELMET.name()
-	};
+	);
 
 	private final MetalCablesAbility metalCablesAbility;
 
@@ -76,7 +76,9 @@ public class MetalCablesListener implements Listener {
 		Player player = event.getPlayer();
 		if (!CAN_BEND_WITH_WEAPONS && GeneralMethods.isWeapon(player.getInventory().getItemInMainHand().getType())) return;
 		if (MultiAbilityManager.hasMultiAbilityBound(player, metalCablesAbility.getName())) {
+			System.out.println("PlayerAnimationEvent");
 			MetalCablesAbility multiAbility = CoreAbility.getAbility(player, MetalCablesAbility.class);
+			if (multiAbility == null) return;
 			multiAbility.activateSubAbility();
 		}
 	}
@@ -98,9 +100,8 @@ public class MetalCablesListener implements Listener {
 		List<ItemStack> sourceSlots = new LinkedList<>(Arrays.asList(inventory.getArmorContents()));
 		sourceSlots.add(inventory.getItemInMainHand());
 		sourceSlots.add(inventory.getItemInOffHand());
-		List<String> sourceSlotsString = sourceSlots.stream().map(slot -> slot.getType().name()).collect(Collectors.toList());
-		for (String validSourceItem : VALID_SOURCE_ITEMS) {
-			if (sourceSlotsString.contains(validSourceItem)) {
+		for (ItemStack sourceSlot : sourceSlots) {
+			if (sourceSlot != null && VALID_SOURCE_ITEMS.contains(sourceSlot.getType().name())) {
 				return true;
 			}
 		}

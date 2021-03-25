@@ -22,6 +22,8 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.util.Vector;
@@ -41,6 +43,9 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	public static final String METAL_COLOR = "#8a94ab";
 	public static final Vector DOWN = new Vector(0, -1, 0);
 
+	private Permission perm;
+	private Listener listener;
+
 	public static final List<MetalCablesSubAbility.SubAbilityActivationHandler> SUB_ABILITIES = new ArrayList<>();
 
 	@ConfigValue("Cooldown")
@@ -49,8 +54,6 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	private static int MAX_USES = 100;
 	@ConfigValue("GenericAbilityCooldown")
 	public static long GLOBAL_SUB_ABILITY_COOLDOWN = 750L;
-
-	private static final double DOUBLE_SPEED = 1.2;
 
 	static {
 		SUB_ABILITIES.addAll(Arrays.asList(
@@ -136,7 +139,8 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 		}
 		// if we found a target to pull towards, proceed to pull the player
 		if (target != null) {
-			MetalCablesUtil.pullEntity(player, target, DOUBLE_SPEED);
+			player.setFallDistance(0);
+			MetalCablesUtil.pullPlayer(player, target, Grapple.PULL_SPEED);
 		}
 	}
 
@@ -247,14 +251,10 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 
 	@Override
 	public void load() {
-		new MetalCablesListener(this);
-		ProjectKorra
-			.plugin
-			.getServer()
-			.getPluginManager()
-			.addPermission(
-				new Permission("bending.ability." + getName(), PermissionDefault.OP)
-			);
+		// TODO: Find out how to unregister this
+		listener = new MetalCablesListener(this);
+		perm = new Permission("bending.ability." + getName(), PermissionDefault.OP);
+		ProjectKorra.plugin.getServer().getPluginManager().addPermission(perm);
 		handleConfig();
 	}
 
@@ -272,9 +272,10 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 				.stream(classWithConfigValues.getDeclaredFields())
 				.filter(field -> Modifier.isStatic(field.getModifiers()))
 				.forEach(field -> {
+					field.setAccessible(true);
 					ConfigValue configValue = field.getAnnotation(ConfigValue.class);
 					if (configValue == null) return;
-					String configPath = getConfigPath(configValue.value(), getClass());
+					String configPath = getConfigPath(configValue.value(), classWithConfigValues);
 					try {
 						config.addDefault(
 							configPath,
@@ -294,8 +295,8 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	}
 
 	public String getConfigPath(String name, Class<?> clazz) {
-		StringBuilder builder = new StringBuilder("ExtraAbilities.FinnBueno.");
-		if (clazz.getSuperclass() == MetalCablesSubAbility.class) {
+		StringBuilder builder = new StringBuilder("ExtraAbilities.FinnBueno.").append(getName()).append(".");
+		if (MetalCablesSubAbility.class.isAssignableFrom(clazz)) {
 			builder.append(clazz.getSimpleName()).append(".");
 		}
 		builder.append(name);
@@ -303,7 +304,10 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	}
 
 	@Override
-	public void stop() {}
+	public void stop() {
+		ProjectKorra.plugin.getServer().getPluginManager().removePermission(perm);
+		HandlerList.unregisterAll(listener);
+	}
 
 	@Override
 	public String getAuthor() {
@@ -322,10 +326,10 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (L)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (L&R)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (R)", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("Grab (L)", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Grab-3", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grab (R)", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("Slam (L)", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("Slam (R)", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Slam-5", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Slam-6", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Clear", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Exit", Element.METAL))
 		);

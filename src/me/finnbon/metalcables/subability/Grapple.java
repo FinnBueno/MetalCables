@@ -59,7 +59,7 @@ public class Grapple extends MetalCablesSubAbility {
 	}
 
 	@ConfigValue("PullSpeed")
-	private static double PULL_SPEED = 1.2;
+	public static double PULL_SPEED = 1.2;
 	@ConfigValue("Range")
 	@Attribute(Attribute.RANGE)
 	private static double RANGE = 100;
@@ -78,9 +78,9 @@ public class Grapple extends MetalCablesSubAbility {
 	@Override
 	public void progress() {
 		super.progress();
-		player.setFallDistance(0);
 		if (player.isSneaking() && hasRequiredSlot() && hasStruckTerrain()) {
-			MetalCablesUtil.pullEntity(player, cableHead, PULL_SPEED);
+			player.setFallDistance(0);
+			MetalCablesUtil.pullPlayer(player, cableHead, PULL_SPEED);
 		}
 	}
 

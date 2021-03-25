@@ -28,6 +28,7 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 		Grab.class,
 		Slam.class
 	);
+	private Permission perm;
 
 	public abstract static class SubAbilityActivationHandler {
 		public void activate(Player player, MetalCablesAbility metalCablesAbility) {
@@ -179,17 +180,14 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 
 	@Override
 	public void load() {
-		ProjectKorra
-			.plugin
-			.getServer()
-			.getPluginManager()
-			.addPermission(
-				new Permission("bending.ability." + getName(), PermissionDefault.OP)
-			);
+		perm = new Permission("bending.ability." + getName(), PermissionDefault.OP);
+		ProjectKorra.plugin.getServer().getPluginManager().addPermission(perm);
 	}
 
 	@Override
-	public void stop() {}
+	public void stop() {
+		ProjectKorra.plugin.getServer().getPluginManager().removePermission(perm);
+	}
 
 	@Override
 	public String getAuthor() {
