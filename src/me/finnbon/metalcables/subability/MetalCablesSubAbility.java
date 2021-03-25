@@ -147,6 +147,7 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 	public void remove() {
 		super.remove();
 		BendingPlayer.getBendingPlayer(player).addCooldown("MetalCables-" + getSubName() + "-" + getSide().name(), getCooldown());
+		BendingPlayer.getBendingPlayer(player).addCooldown(getSubName() + " (" + getSide().name().charAt(0) + ")", getCooldown());
 	}
 
 	@Override
