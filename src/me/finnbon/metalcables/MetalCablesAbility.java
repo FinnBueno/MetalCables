@@ -16,7 +16,6 @@ import me.finnbon.metalcables.util.MetalCablesUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -161,11 +160,7 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 	 * @return Whether or not the ability should stop
 	 */
 	private boolean shouldDisable() {
-		if (player.isDead() || !player.isOnline()) {
-			return true;
-		}
-		// TODO: Check for uses and armor
-		return false;
+		return player.isDead() || !player.isOnline();
 	}
 
 	public void activateSubAbility() {
@@ -251,14 +246,13 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 
 	@Override
 	public void load() {
-		// TODO: Find out how to unregister this
 		listener = new MetalCablesListener(this);
 		perm = new Permission("bending.ability." + getName(), PermissionDefault.OP);
 		ProjectKorra.plugin.getServer().getPluginManager().addPermission(perm);
-		handleConfig();
+		setupConfigValues();
 	}
 
-	private void handleConfig() {
+	private void setupConfigValues() {
 		FileConfiguration config = ConfigManager.getConfig();
 		Class<?>[] classesWithConfigValues = new Class<?>[] {
 			MetalCablesAbility.class,
@@ -326,10 +320,10 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (L)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (L&R)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grapple (R)", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Grab-3", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("Grab (L)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Grab (R)", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Slam-5", Element.METAL),
-				new MultiAbilityManager.MultiAbilityInfoSub("MetalCables-Slam-6", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("Slam (L)", Element.METAL),
+				new MultiAbilityManager.MultiAbilityInfoSub("Slam (R)", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Clear", Element.METAL),
 				new MultiAbilityManager.MultiAbilityInfoSub("Exit", Element.METAL))
 		);
