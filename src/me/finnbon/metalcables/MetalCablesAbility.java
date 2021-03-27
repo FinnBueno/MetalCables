@@ -250,6 +250,9 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 		perm = new Permission("bending.ability." + getName(), PermissionDefault.OP);
 		ProjectKorra.plugin.getServer().getPluginManager().addPermission(perm);
 		setupConfigValues();
+		FileConfiguration config = ConfigManager.languageConfig.get();
+		config.addDefault("Abilities." + getElement() + "." + getName() + ".Description", "This ability allows a metalbender to swing around on long metalcables, as well as slam and grab others with it. To active, press shift. You will see a bar at the top of your screen displaying your uses left for this move. To use any of the subabilities, simply left click with the desired slot selected. With grapple and grab, you can sneak with the ability active to either pull yourself towards the hook, or pull a grabbed entity towards you. Sneaking on Grapple (L&R) will also activate Grab.");
+		ConfigManager.languageConfig.save();
 	}
 
 	private void setupConfigValues() {
