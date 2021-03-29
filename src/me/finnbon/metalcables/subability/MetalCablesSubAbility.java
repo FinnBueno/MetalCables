@@ -64,7 +64,6 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 	protected WaterArms.Arm side;
 	protected Location cableHead;
 	protected final Vector direction;
-	protected double distanceTravelled;
 	protected boolean isStuck;
 
 	public MetalCablesSubAbility(Player player, int requiredSlot, MetalCablesAbility metalCablesAbility) {
@@ -74,7 +73,6 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 		side = slotToSide(requiredSlot);
 		cableHead = player.getEyeLocation();
 		direction = cableHead.getDirection();
-		distanceTravelled = 0;
 	}
 
 	@Override
@@ -86,11 +84,10 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 		if (!hasStruckTerrain()) {
 			// travel
 			cableHead.add(direction);
-			distanceTravelled += getSpeed();
 			if (getSpeed() >= 0.75) {
 				checkClipping();
 			}
-			if (distanceTravelled > getMaxDistance()) {
+			if (cableHead.distanceSquared(player.getEyeLocation()) > getMaxDistance() * getMaxDistance()) {
 				remove();
 				return;
 			}
@@ -113,8 +110,6 @@ public abstract class MetalCablesSubAbility extends MetalAbility implements Addo
 		for (double step = 0; step < distance; step += .25) {
 			if (isLocationInTerrain(previous)) {
 				cableHead = previous;
-				distanceTravelled -= getSpeed();
-				distanceTravelled += step;
 				return;
 			}
 			previous.add(delta);

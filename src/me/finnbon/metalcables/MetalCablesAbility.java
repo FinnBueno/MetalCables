@@ -257,6 +257,8 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 
 	private void setupConfigValues() {
 		FileConfiguration config = ConfigManager.getConfig();
+		// in here we put all classes that have config values in them
+		// if you use the ConfigValue annotation in a class that's not listed here, it won't be generated!
 		Class<?>[] classesWithConfigValues = new Class<?>[] {
 			MetalCablesAbility.class,
 			Grapple.class,
@@ -264,21 +266,42 @@ public class MetalCablesAbility extends MetalAbility implements MultiAbility, Ad
 			Slam.class,
 			MetalCablesListener.class
 		};
+		// loop through all classes with config values
 		for (Class<?> classWithConfigValues : classesWithConfigValues) {
 			Arrays
+				// get all declared fields of given class
 				.stream(classWithConfigValues.getDeclaredFields())
+				// filter out the non-static ones
 				.filter(field -> Modifier.isStatic(field.getModifiers()))
 				.forEach(field -> {
+					// remove the private access modifier
 					field.setAccessible(true);
+					// get the ConfigValue annotation
 					ConfigValue configValue = field.getAnnotation(ConfigValue.class);
+					// if there was none, go to next field
 					if (configValue == null) return;
+					// generate the config path
 					String configPath = getConfigPath(configValue.value(), classWithConfigValues);
+					// check if the field is final
+					if (Modifier.isFinal(field.getModifiers())) {
+						try {
+							// try to remove the final modifier if there are any
+							field.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+						} catch (IllegalAccessException e) {
+							System.err.println("Could not remove final modifier of config field " + configPath + ". Try removing the final modifier.");
+							e.printStackTrace();
+							return;
+						}
+					}
 					try {
+						// set a default value in the config, equal to the value of the field
 						config.addDefault(
 							configPath,
 							field.get(null)
 						);
+						// read the value that's in the config
 						Object valueFromConfig = config.get(configPath);
+						// if the value from the config is not null, set it
 						if (valueFromConfig != null) {
 							field.set(null, valueFromConfig);
 						}
